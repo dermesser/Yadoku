@@ -1,8 +1,8 @@
 # YAdoku: Yet another Sudoku solver.
 
-This is a quite simple backtracking Sudoku solver. Easy 9x9 systems are usually solved within some
-milliseconds (e.g. example1), very hard ones need few seconds (example3 needs 1.6 seconds with -O3 on an elderly
-Core i5 processor).
+This is a quite simple backtracking Sudoku solver. It's fast for most systems intended for humans
+(every tested sudoku from this category needed less than a second, usually less than 0.25 seconds), but can
+be very slow on very hard ones (like Peter Norvig's [top95](http://norvig.com/top95.txt)).
 
 ## `sudoku9` executable
 
