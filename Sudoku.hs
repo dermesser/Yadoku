@@ -108,10 +108,7 @@ setField s p v = setElem v p s
 possibilities :: Sudoku -> Position -> [Value]
 possibilities s p = case s ! p of
                         0 -> [1..fromIntegral order] \\ (usedValues s p)
-                        v -> [v]
-
-theoreticalPossibilities :: Sudoku -> Position -> [Value]
-theoreticalPossibilities s p = ([1..fromIntegral order] \\ (usedValues s p)) -- \\ [s ! p]
+                        v -> [v] -- field value if already set
 
 -- This function applies the Sudoku constraints.
 usedValues :: Sudoku -> Position -> [Value]
@@ -158,10 +155,10 @@ example2 represents this system:
 ( 4 _ 2 _ )
 -}
 example1, example2, example3, example4 :: Sudoku
-example1 = fromString $ "308104590960530001007090430002903718043000059109280600090408005081000904430029107" -- easy one, large
-example2 = fromString $ "1230340201034020" -- kids love it!
-example3 = fromString $ "002500000000020000004000000000050000000200000000400000000000030000000200000009007" -- this is a hard one.
-example4 = fromString $ "100060300020001000003008605000400150400050008058006000905800700000600080001030009"
+example1 = fromString "308104590960530001007090430002903718043000059109280600090408005081000904430029107" -- easy one, large
+example2 = fromString "1230340201034020" -- kids love it!
+example3 = fromString "002500000000020000004000000000050000000200000000400000000000030000000200000009007" -- this is a hard one.
+example4 = fromString "100060300020001000003008605000400150400050008058006000905800700000600080001030009"
 
 -- Generic Utils
 
@@ -169,4 +166,4 @@ cons :: a -> [a]
 cons = (:[])
 
 occurrencesInList :: Eq a => a -> [a] -> Int
-occurrencesInList e l = foldl' (\n a -> if a == e then n+1 else n) 0 l
+occurrencesInList e = foldl' (\n a -> if a == e then n+1 else n) 0
