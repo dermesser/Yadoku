@@ -85,10 +85,19 @@ listMap f (x:xs) = (f x) ++ listMap f xs
 -------------------------
 
 
--- Integrity checking
+-- Integrity checking --
 
 checkIntegrity :: Sudoku -> Bool
-checkIntegrity s = and [ (s ! (r,c)) `elem` (0 : theoreticalPossibilities s (r,c)) | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
+checkIntegrity s = and [ let e = (s ! p); p = (r,c) in
+                            e == 0 ||
+                            (occs e (block p)) <= 1 &&
+                            (occs e (row r)) <= 1 &&
+                            (occs e (col c)) <= 1
+                       | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
+    where occs = occurrencesInList
+          block = blockValues s
+          row = rowValues s
+          col = colValues s
 
 -- Sudoku Utils --
 
@@ -102,7 +111,7 @@ possibilities s p = case s ! p of
                         v -> [v]
 
 theoreticalPossibilities :: Sudoku -> Position -> [Value]
-theoreticalPossibilities s p = [1..fromIntegral order] \\ ((usedValues s p) \\ [s ! p])
+theoreticalPossibilities s p = ([1..fromIntegral order] \\ (usedValues s p)) -- \\ [s ! p]
 
 -- This function applies the Sudoku constraints.
 usedValues :: Sudoku -> Position -> [Value]
@@ -158,3 +167,6 @@ example4 = fromString $ "1000603000200010000030086050004001504000500080580060009
 
 cons :: a -> [a]
 cons = (:[])
+
+occurrencesInList :: Eq a => a -> [a] -> Int
+occurrencesInList e l = foldl' (\n a -> if a == e then n+1 else n) 0 l
