@@ -1,7 +1,5 @@
 module Sudoku where
 
-import Control.DeepSeq
-
 import Data.Matrix
 import Data.Word
 import Data.List
@@ -19,7 +17,8 @@ type Position = (Index, Index) -- This is (row,column) for compatibility with Da
 ---------------------------
 -- Example entry function
 ---------------------------
-main = putStrLn . fromMaybe "No solution found" . fmap prettyMatrix . solve $ example4
+iosolve :: Sudoku -> IO ()
+iosolve = putStrLn . fromMaybe "No solution found" . fmap prettyMatrix . solve
 
 -- Entry; starts solving at left-top corner.
 solve :: Sudoku -> Maybe Sudoku
@@ -32,7 +31,7 @@ solve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- Thi
                                                     (x:[]) -> Just x -- Hopefully only one element!
                  | c > order = solve' s (r+1,1)
                  | r > order = solve' s (1,c+1)
-                 | otherwise = maybeMap (flip solve'(r+1,c)) sudokuPossibilities -- Search for a successful version of the system
+                 | otherwise = maybeMap (flip solve' (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
                  where sudokuPossibilities = (map (setField s p) $ possibilities s p)
 
 -- Opposite of mapM: Returns the first result carrying a value. Sufficient for Sudoku backtracking
