@@ -56,12 +56,12 @@ eitherMap f (x:xs) = case f x of
 -- All-result solver
 ------------------------
 
-iondsolve :: Sudoku -> IO ()
+iondsolve :: Sudoku -> IO Int
 iondsolve s = do
                 let sys = ndsolve s
                 case sys of
-                    [] -> putStrLn "No acceptable solution was found; maybe there was no inital integrity?"
-                    xs -> mapM_ print xs
+                    [] -> putStrLn "No acceptable solution was found; maybe there was no inital integrity?" >> return 0
+                    xs -> mapM_ print xs >> (return $ length xs)
 
 ndsolve :: Sudoku -> [Sudoku]
 ndsolve s = if checkIntegrity s

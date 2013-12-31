@@ -16,6 +16,7 @@ main = do
     if | length sysstring < order*order     -> putStrLn "Supplied system has less than 81 fields! Aborting." >> exitFailure
        | length sysstring > order*order     -> putStrLn "Supplied system has more than 81 fields! Dropping trailing fields, continuing..."
        | otherwise                          -> return ()
-    iondsolve $ fromString sysstring
+    l <- iondsolve $ fromString sysstring
+    putStrLn $ "\n===\n" ++ show l ++ " solution" ++ (if l == 1 then " was" else "s were") ++ " found."
 
 putHelp = putStrLn "Usage: $ sudoku <9x9-system>" >> exitFailure
