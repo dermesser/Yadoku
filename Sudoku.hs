@@ -1,5 +1,7 @@
 module Sudoku where
 
+import Control.Parallel.Strategies
+
 import Data.Matrix
 import Data.Word
 import Data.List
@@ -44,13 +46,15 @@ solve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- Thi
                  | otherwise = eitherMap (flip solve' (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
                  where sudokuPossibilities = (map (setField s p) $ possibilities s p)
 
+-------- REALLY BAD IDEA to use this. It's even slower than the non-parallel version! ------------------
 -- Opposite of mapM: Returns the first result carrying a value. Sufficient for Sudoku backtracking
-eitherMap :: (a -> Either String b) -> [a] -> Either String b
+eitherMap :: NFData b => (a -> Either String b) -> [a] -> Either String b
 eitherMap _ [] = Left "_No solution on this path" -- this shouldn't be returned to top-level solve' for normal sudokus :-\
-eitherMap f (x:xs) = case f x of
-                        Right y -> Right y
-                        Left e -> eitherMap f xs
-
+eitherMap f (x:xs) = runEval $ do
+    x' <- rpar (f x)
+    case x' of
+        Left e -> rpar (eitherMap f xs)
+        Right s -> return $ Right s
 
 ------------------------
 -- All-result solver
@@ -76,9 +80,9 @@ ndsolve' s p@(r,c) | r == order && c == order = filter checkIntegrity sudokuPoss
                  where sudokuPossibilities = (map (setField s p) $ possibilities s p)
 
 
-listMap :: (a -> [b]) -> [a] -> [b]
+listMap :: NFData b => (a -> [b]) -> [a] -> [b]
 listMap _ [] = []
-listMap f (x:xs) = concatMap f (x:xs)
+listMap f (x:xs) = concat . parMap rpar f $ (x:xs)
 
 -------------------------
 -- No more solver logic
