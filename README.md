@@ -11,7 +11,7 @@ Build the executable file using cabal or `ghc --make -O3 sudoku9.hs`. When execu
 
     sudoku9 000000500000000010209006003400050000006800002017090000000085007060010309023004000
 
-These digits come from the corresponding system
+These digits represent the corresponding system
 
     X X X  X X X  5 X X
     X X X  X X X  X 1 X
@@ -42,6 +42,44 @@ It's solved as
 ## `sudoku9nd` executable
 
 This program shows every possibility how to solve the given initial system.
+
+Starting with
+
+    ( 1 0 0 0 6 0 3 0 0 )
+    ( 0 2 0 0 0 1 0 0 0 )
+    ( 0 0 3 0 0 8 6 0 5 )
+    ( 0 0 0 4 0 0 1 5 0 )
+    ( 4 0 0 0 5 0 0 0 8 )
+    ( 0 5 8 0 0 6 0 0 0 )
+    ( 9 0 5 8 0 0 7 0 0 )
+    ( 0 0 0 6 0 0 0 8 0 )
+    ( 0 0 1 0 3 0 0 0 2 ),
+
+`sudoku9nd` will find two possible solutions:
+
+    ( 1 8 4 9 6 5 3 2 7 )
+    ( 5 2 6 3 7 1 8 9 4 )
+    ( 7 9 3 2 4 8 6 1 5 )
+    ( 6 7 2 4 8 9 1 5 3 )
+    ( 4 1 9 7 5 3 2 6 8 )
+    ( 3 5 8 1 2 6 4 7 9 )
+    ( 9 4 5 8 1 2 7 3 6 )
+    ( 2 3 7 6 9 4 5 8 1 )
+    ( 8 6 1 5 3 7 9 4 2 )
+
+    ( 1 8 4 9 6 5 3 2 7 )
+    ( 5 2 6 3 7 1 8 4 9 )
+    ( 7 9 3 2 4 8 6 1 5 )
+    ( 6 7 2 4 8 9 1 5 3 )
+    ( 4 1 9 7 5 3 2 6 8 )
+    ( 3 5 8 1 2 6 9 7 4 )
+    ( 9 4 5 8 1 2 7 3 6 )
+    ( 2 3 7 6 9 4 5 8 1 )
+    ( 8 6 1 5 3 7 4 9 2 )
+
+
+    ===
+    2 solutions were found.
 
 ## Jargon and errors
 

@@ -110,7 +110,7 @@ possibilities s p = case s ! p of
                         0 -> [1..fromIntegral order] \\ (usedValues s p)
                         v -> [v] -- field value if already set
 
--- This function applies the Sudoku constraints.
+-- This function applies the actual Sudoku constraints.
 usedValues :: Sudoku -> Position -> [Value]
 usedValues s p = ((blockValues s p) `union` (rowValues s p) `union` (colValues s p)) `intersect` [1..fromIntegral order] -- intersect to remove all 0s
 
