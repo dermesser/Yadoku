@@ -46,7 +46,7 @@ solve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- Thi
 
 -- Opposite of mapM: Returns the first result carrying a value. Sufficient for Sudoku backtracking
 eitherMap :: (a -> Either String b) -> [a] -> Either String b
-eitherMap _ [] = Left "_No solution on this path"
+eitherMap _ [] = Left "_No solution on this path" -- this shouldn't be returned to top-level solve' for normal sudokus :-\
 eitherMap f (x:xs) = case f x of
                         Right y -> Right y
                         Left e -> eitherMap f xs
