@@ -18,28 +18,67 @@ type Position = (Index, Index) -- This is (row,column) for compatibility with Da
 -- Example entry function
 ---------------------------
 iosolve :: Sudoku -> IO ()
-iosolve = putStrLn . fromMaybe "No solution found" . fmap prettyMatrix . solve
+iosolve s = do
+                let sys = solve s
+                case sys of
+                    Left s -> putStrLn s
+                    Right m -> putStrLn $ prettyMatrix m
+
+---------------------------------------
+-- Deterministic (one-result) solver
+---------------------------------------
 
 -- Entry; starts solving at left-top corner.
-solve :: Sudoku -> Maybe Sudoku
-solve s = solve' s (1,1)
+solve :: Sudoku -> Either String Sudoku
+solve s = if checkIntegrity s
+          then solve' s (1,1)
+          else Left "No initial integrity" -- Initial system is not valid.
 
 -- Tries to solve several resulting Sudoku systems for different values at the current position: Backtracking
-solve' :: Sudoku -> Position -> Maybe Sudoku
+solve' :: Sudoku -> Position -> Either String Sudoku
 solve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- This clause is used when we try to solve the last field (position (order,order))
-                                                    [] -> Nothing -- No solution possible.
-                                                    (x:[]) -> Just x -- Hopefully only one element!
+                                                    [] -> Left "No solution was found" -- No solution possible.
+                                                    (x:[]) -> Right x
                  | c > order = solve' s (r+1,1)
                  | r > order = solve' s (1,c+1)
-                 | otherwise = maybeMap (flip solve' (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
+                 | otherwise = eitherMap (flip solve' (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
                  where sudokuPossibilities = (map (setField s p) $ possibilities s p)
 
 -- Opposite of mapM: Returns the first result carrying a value. Sufficient for Sudoku backtracking
-maybeMap :: (a -> Maybe b) -> [a] -> Maybe b
-maybeMap _ [] = Nothing
-maybeMap f (x:xs) = case f x of
-                        Just y -> Just y
-                        Nothing -> maybeMap f xs
+eitherMap :: (a -> Either String b) -> [a] -> Either String b
+eitherMap _ [] = Left "_No solution on this path"
+eitherMap f (x:xs) = case f x of
+                        Right y -> Right y
+                        Left e -> eitherMap f xs
+
+
+------------------------
+-- All-result solver
+------------------------
+
+iondsolve :: Sudoku -> IO ()
+iondsolve s = do
+                let sys = ndsolve s
+                case sys of
+                    [] -> putStrLn "No acceptable solution was found; maybe there was no inital integrity?"
+                    xs -> mapM_ print xs
+
+ndsolve :: Sudoku -> [Sudoku]
+ndsolve s = if checkIntegrity s
+            then ndsolve' s (1,1)
+            else []
+
+ndsolve' :: Sudoku -> Position -> [Sudoku]
+ndsolve' s p@(r,c) | r == order && c == order = filter checkIntegrity sudokuPossibilities -- This clause is used when we try to solve the last field (position (order,order))
+                 | c > order = ndsolve' s (r+1,1)
+                 | r > order = ndsolve' s (1,c+1)
+                 | otherwise = listMap (flip ndsolve' (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
+                 where sudokuPossibilities = (map (setField s p) $ possibilities s p)
+
+
+listMap :: (a -> [b]) -> [a] -> [b]
+listMap _ [] = []
+listMap f (x:xs) = (f x) ++ listMap f xs
 
 -------------------------
 -- No more solver logic
