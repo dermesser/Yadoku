@@ -41,6 +41,7 @@ maybeMap f (x:xs) = case f x of
                         Just y -> Just y
                         Nothing -> maybeMap f xs
 
+
 -- Sudoku Utils --
 
 setField :: Sudoku -> Position -> Value -> Sudoku
