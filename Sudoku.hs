@@ -41,6 +41,15 @@ maybeMap f (x:xs) = case f x of
                         Just y -> Just y
                         Nothing -> maybeMap f xs
 
+-------------------------
+-- No more solver logic
+-------------------------
+
+
+-- Integrity checking
+
+checkIntegrity :: Sudoku -> Bool
+checkIntegrity s = and [ (s ! (r,c)) `elem` (0 : theoreticalPossibilities s (r,c)) | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
 
 -- Sudoku Utils --
 
@@ -52,6 +61,9 @@ possibilities :: Sudoku -> Position -> [Value]
 possibilities s p = case s ! p of
                         0 -> [1..fromIntegral order] \\ (usedValues s p)
                         v -> [v]
+
+theoreticalPossibilities :: Sudoku -> Position -> [Value]
+theoreticalPossibilities s p = [1..fromIntegral order] \\ ((usedValues s p) \\ [s ! p])
 
 -- This function applies the Sudoku constraints.
 usedValues :: Sudoku -> Position -> [Value]
