@@ -78,7 +78,7 @@ ndsolve' s p@(r,c) | r == order && c == order = filter checkIntegrity sudokuPoss
 
 listMap :: (a -> [b]) -> [a] -> [b]
 listMap _ [] = []
-listMap f (x:xs) = (f x) ++ listMap f xs
+listMap f (x:xs) = concatMap f (x:xs)
 
 -------------------------
 -- No more solver logic
@@ -88,11 +88,11 @@ listMap f (x:xs) = (f x) ++ listMap f xs
 -- Integrity checking --
 
 checkIntegrity :: Sudoku -> Bool
-checkIntegrity s = and [ let e = (s ! p); p = (r,c) in
+checkIntegrity s = and [ let e = (s ! p); p = (r,c) in -- if the value is not null and appears in row, column or block more than once, something's wrong.
                             e == 0 ||
                             (occs e (block p)) <= 1 &&
-                            (occs e (row r)) <= 1 &&
-                            (occs e (col c)) <= 1
+                            (occs e (row p)) <= 1 &&
+                            (occs e (col p)) <= 1
                        | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
     where occs = occurrencesInList
           block = blockValues s
@@ -112,25 +112,40 @@ possibilities s p = case s ! p of
 
 -- This function applies the Sudoku constraints.
 usedValues :: Sudoku -> Position -> [Value]
-usedValues s p@(r,c) = ((blockValues s p) `union` (rowValues s r) `union` (colValues s c)) `intersect` [1..fromIntegral order] -- intersect to remove all 0s
+usedValues s p = ((blockValues s p) `union` (rowValues s p) `union` (colValues s p)) `intersect` [1..fromIntegral order] -- intersect to remove all 0s
 
 -- Matrix/Index/Position operations
 
+-- Returns the limiting elements. example
+{-
+
+The top-left box unit is asked. x marks the elements limiting it ( (1,1) , (4,4) )
+
+x - -  - - - ...
+- - -  - - - ...
+- - -  - - - ...
+
+- - -  x - - ...
+- - -  - - - ...
+- - -  - - - ...
+...
+
+-}
 blockLimits :: Position -> (Position,Position)
 blockLimits (r,c) = let c' = ((c-1) `div` suborder)
                         r' = ((r-1) `div` suborder)
                     in ((1 + r'*suborder, 1 + c'*suborder),
                         (1 + (r'+1)*suborder, 1 + (c'+1)*suborder))
 
-blockPositions :: (Position,Position) -> [Position]
-blockPositions ((r1,c1),(r2,c2)) = [ (r,c) | r <- [r1..order], c <- [c1..order], c < c2, r < r2 ]
+-- returns field coordinates of all fields between the top left (r1,c1) and the bottom right (r2,c2) coordinates
+blockFields :: (Position,Position) -> [Position]
+blockFields ((r1,c1),(r2,c2)) = [ (r,c) | r <- [r1..order], c <- [c1..order], c < c2, r < r2 ]
 
-blockValues :: Sudoku -> Position -> [Value]
-blockValues s p = map (s!) . blockPositions . blockLimits $ p
-
-rowValues, colValues :: Sudoku -> Index -> [Value]
-rowValues s i = V.toList . getRow i $ s
-colValues s i = V.toList . getCol i $ s
+-- All field values in the unit the field belongs to.
+blockValues, rowValues, colValues :: Sudoku -> Position -> [Value]
+blockValues s p = map (s!) . blockFields . blockLimits $ p
+rowValues s (r,_) = V.toList . getRow r $ s
+colValues s (_,c) = V.toList . getCol c $ s
 
 -- Constants
 
