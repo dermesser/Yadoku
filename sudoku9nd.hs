@@ -1,5 +1,3 @@
-{-# LANGUAGE MultiWayIf #-}
-
 module Main where
 
 import System.Environment
@@ -9,14 +7,14 @@ import System.Exit
 import Sudoku
 
 main = do
-    xs <- getArgs
-    sysstring <- if length xs /= 1
-                 then putHelp
-                 else return . map (\c -> if c == '.' then '0' else c) . head $ xs
-    if | length sysstring < order*order     -> putStrLn "Supplied system has less than 81 fields! Aborting." >> exitFailure
-       | length sysstring > order*order     -> putStrLn "Supplied system has more than 81 fields! Dropping trailing fields, continuing..."
-       | otherwise                          -> return ()
-    l <- iondsolve $ fromString sysstring
-    putStrLn $ "\n===\n" ++ show l ++ " solution" ++ (if l == 1 then " was" else "s were") ++ " found."
-
+        xs <- getArgs
+        sysstring <- if length xs /= 1
+                     then putHelp
+                     else return . map (\c -> if c == '.' then '0' else c) . head $ xs
+        checkErr sysstring
+        l <- iondsolve $ fromString sysstring
+        putStrLn $ "\n===\n" ++ show l ++ " solution" ++ (if l == 1 then " was" else "s were") ++ " found."
+    where checkErr sysstring | length sysstring < order*order     = putStrLn "Supplied system has less than 81 fields! Aborting." >> exitFailure
+                             | length sysstring > order*order     = putStrLn "Supplied system has more than 81 fields! Dropping trailing fields, continuing..."
+                             | otherwise                          = return ()
 putHelp = putStrLn "Usage: $ sudoku <9x9-system>" >> exitFailure
