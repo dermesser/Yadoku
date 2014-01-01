@@ -134,6 +134,7 @@ usedValues s p = ((blockValues s p) `union` (rowValues s p) `union` (colValues s
 -- Matrix/Index/Position operations
 
 -- Returns the limiting elements. example
+
 {-
 
 The top-left box unit is asked. x marks the elements limiting it ( (1,1) , (4,4) )
@@ -148,6 +149,7 @@ x - -  - - - ...
 ...
 
 -}
+
 blockLimits :: Position -> (Position,Position)
 blockLimits (r,c) = let c' = ((c-1) `div` suborder)
                         r' = ((r-1) `div` suborder)
@@ -171,11 +173,20 @@ order, suborder :: Int
 order = 9
 suborder = 3
 
--- Data
+-- Conversion --
 
 -- Convert a string-represented system to a matrix.
 fromString :: String -> Sudoku
 fromString = fromList order order . map (read . cons)
+
+toString :: Sudoku -> String
+toString s = concat $ [ f r c | r <- [1..fromIntegral order], c <- [1..fromIntegral order] ]
+    where f r c | (r `mod` suborder == 0) && (c == order) = show (s ! (r,c)) ++ "\n\n"
+                | (c == order) = show (s ! (r,c)) ++ "\n"
+                | (c `mod` suborder) == 0 = show (s ! (r,c)) ++ "  "
+                | otherwise = show (s ! (r,c)) ++ " "
+
+-- Data/Examples --
 
 -- Input of a Sudoku system as String: type the system line after line and set zeros for empty fields.
 {-
