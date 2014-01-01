@@ -46,11 +46,28 @@ solve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- Thi
 
 -- Opposite of mapM: Returns the first result carrying a value. Sufficient for Sudoku backtracking
 eitherMap :: (a -> Either String b) -> [a] -> Either String b
-eitherMap _ [] = Left "_No solution on this path" -- this shouldn't be returned to top-level solve' for normal sudokus :-\
+eitherMap _ [] = Left "No solution could be found; possibly unsolvable system!" -- This should appear quite rarely. However, there is the possibility of encountering this [1]
 eitherMap f (x:xs) = case f x of
                         Right y -> Right y
                         Left e -> eitherMap f xs
 
+{- [1]
+
+Think of this system:
+
+  C    1 2 3 4 5 6 7 8 9
+
+R 1  ( 1 2 3 0 0 0 0 0 0 )
+  2  ( 4 5 6 0 0 0 0 0 0 )
+  3  ( 7 8 0 9 0 0 0 0 0 )
+  4  ( 0 0 0 0 0 0 0 0 0 )
+  5  ( 0 0 0 0 0 0 0 0 0 )
+  ...
+
+It is not possible to find a solution as there is no
+possibility to fill (3,3).
+
+-}
 
 ------------------------
 -- All-result solver
