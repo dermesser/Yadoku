@@ -22,7 +22,7 @@ iosolve s = do
                 let sys = solve s
                 case sys of
                     Left s -> putStrLn s
-                    Right m -> putStrLn $ prettyMatrix m
+                    Right m -> putStrLn . toString $ m
 
 ---------------------------------------
 -- Deterministic (one-result) solver
@@ -78,7 +78,7 @@ iondsolve s = do
                 let sys = ndsolve s
                 case sys of
                     [] -> putStrLn "No acceptable solution was found; maybe there was no inital integrity?" >> return 0
-                    xs -> mapM_ print xs >> (return $ length xs)
+                    xs -> mapM_ (putStrLn . toString) xs >> (return $ length xs)
 
 ndsolve :: Sudoku -> [Sudoku]
 ndsolve s = if checkIntegrity s
