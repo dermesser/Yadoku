@@ -16,6 +16,7 @@ type Value = Word8
 -- Matrix addressing is in Int.
 type Index = Int
 type Position = (Index, Index) -- This is (row,column) for compatibility with Data.Matrix
+type ErrorPosition = (Bool, Position)
 
 ---------------------------
 -- Example entry function
@@ -24,7 +25,7 @@ iosolve :: Sudoku -> IO ()
 iosolve s = do
                 let sys = solve s
                 case sys of
-                    Left s -> putStrLn s
+                    Left e -> putStrLn "" >> putStrLn e >> putStrLn (toString s)
                     Right m -> putStrLn . toString $ m
 
 ---------------------------------------
@@ -34,7 +35,7 @@ iosolve s = do
 -- Entry; starts solving at left-top corner.
 solve :: Sudoku -> Either String Sudoku
 solve s = case checkIntegrity s of
-                (True,True) -> solve' s (1,1)
+                ((True,_),(True,_)) -> solve' s (1,1)
                 e -> strerror e
 
 
@@ -81,15 +82,13 @@ iondsolve :: Sudoku -> IO Int
 iondsolve s = do
                 let sys = ndsolve s
                 case sys of
-                    Left e -> putStrLn e >> return 0
+                    Left e -> putStrLn "" >> putStrLn e >> putStrLn (toString s) >> return 0
                     Right xs -> mapM_ (putStrLn . toString) xs >> (return $ length xs)
 
 ndsolve :: Sudoku -> Either String [Sudoku]
 ndsolve s = case checkIntegrity s of
-                (True,True) -> runListT $ ndsolve' s (1,1)
-                (False,True) -> Left "Some value appears doubly in unit; recheck your input!"
-                (True,False) -> Left "This Sudoku system is unsolvable: The initial configuration forbids a valid solution"
-                (False,False) -> Left $ "Some value appears doubly in unit; recheck your input; also, this Sudoku system is unsolvable: the initial configuration forbids a valid solution."
+                ((True,_),(True,_)) -> runListT $ ndsolve' s (1,1)
+                p -> strerror p
 
 ndsolve' :: Sudoku -> Position -> LE String Sudoku
 ndsolve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- This clause is used when we try to solve the last field (position (order,order))
@@ -109,25 +108,26 @@ ndsolve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- T
 -- Integrity checking --
 
 -- This function checks if the initial system is valid at all.
-checkIntegrity :: Sudoku -> (Bool,Bool)
+checkIntegrity :: Sudoku -> (ErrorPosition,ErrorPosition)
 checkIntegrity s = (onlyOnceOccurrence,atLeastOnePossibility)
-    where onlyOnceOccurrence = and [ let e = (s ! p); p = (r,c) in -- if the value is not null and appears in row, column or block more than once, something's wrong.
+    where onlyOnceOccurrence = findError [ (let e = (s ! p); p = (r,c) in -- if the value is not null and appears in row, column or block more than once, something's wrong.
                             e == 0 ||
                             (occs e (block p)) <= 1 &&
                             (occs e (row p)) <= 1 &&
-                            (occs e (col p)) <= 1
+                            (occs e (col p)) <= 1, (r,c))
                        | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
-          atLeastOnePossibility = and [ length (possibilities s (r,c)) > 0 | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
+          atLeastOnePossibility = findError [ (length (possibilities s (r,c)) > 0,(r,c)) | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
           occs = occurrencesInList
           block = blockValues s
           row = rowValues s
           col = colValues s
 
-strerror :: (Bool,Bool) -> Either String a
+strerror :: (ErrorPosition,ErrorPosition) -> Either String a
 strerror e = case e of
-                (False,True) -> Left "Some value appears doubly in unit; recheck your input!"
-                (True,False) -> Left "This Sudoku system is unsolvable: The initial configuration forbids a valid solution"
-                (False,False) -> Left $ "Some value appears doubly in unit; recheck your input; also, this Sudoku system is unsolvable: the initial configuration forbids a valid solution."
+                ((False,p), (True,_)) -> Left $ "A value appears doubly in one unit; recheck your input at " ++ show p
+                ((True,_), (False,p)) -> Left $ "This Sudoku system is unsolvable: The initial configuration forbids a valid solution. Error at: " ++ show p
+                ((False,p1), (False,p2)) -> Left $ "Some value appears doubly in unit; recheck your input;" ++
+                                            "also, this Sudoku system is unsolvable: the initial configuration forbids a valid solution. Errors at: " ++ show p1 ++ " and " ++ show p2
 
 -- Sudoku Utils --
 
