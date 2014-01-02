@@ -33,9 +33,10 @@ iosolve s = do
 
 -- Entry; starts solving at left-top corner.
 solve :: Sudoku -> Either String Sudoku
-solve s = if checkIntegrity s
-          then solve' s (1,1)
-          else Left "No initial integrity" -- Initial system is not valid.
+solve s = case checkIntegrity s of
+                (True,True) -> solve' s (1,1)
+                e -> strerror e
+
 
 -- Tries to solve several resulting Sudoku systems for different values at the current position: Backtracking
 solve' :: Sudoku -> Position -> Either String Sudoku
@@ -121,6 +122,12 @@ checkIntegrity s = (onlyOnceOccurrence,atLeastOnePossibility)
           block = blockValues s
           row = rowValues s
           col = colValues s
+
+strerror :: (Bool,Bool) -> Either String a
+strerror e = case e of
+                (False,True) -> Left "Some value appears doubly in unit; recheck your input!"
+                (True,False) -> Left "This Sudoku system is unsolvable: The initial configuration forbids a valid solution"
+                (False,False) -> Left $ "Some value appears doubly in unit; recheck your input; also, this Sudoku system is unsolvable: the initial configuration forbids a valid solution."
 
 -- Sudoku Utils --
 
@@ -209,10 +216,3 @@ example2 = fromString "1230340201034020" -- kids love it!
 example3 = fromString "002500000000020000004000000000050000000200000000400000000000030000000200000009007" -- this is a hard one.
 example4 = fromString "100060300020001000003008605000400150400050008058006000905800700000600080001030009"
 
--- Generic Utils
-
-cons :: a -> [a]
-cons = (:[])
-
-occurrencesInList :: Eq a => a -> [a] -> Int
-occurrencesInList e = foldl' (\n a -> if a == e then n+1 else n) 0
