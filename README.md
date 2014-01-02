@@ -112,3 +112,19 @@ CPU time in the case of a typo).
     X 6 X  X 1 X  3 X 9
     X 2 3  X X 4  X X 9
 
+Another error which is caught by the solver before trying to solve a system is an unsolvable configuration like this:
+
+    1 2 3  0 0 0  0 0 0
+    4 5 6  0 0 0  0 0 0
+    7 8 0  9 0 0  0 0 0
+
+    0 0 0  0 0 0  0 0 0
+    0 0 0  0 0 0  0 0 0
+    0 0 0  0 0 0  0 0 0
+
+    0 0 0  0 0 0  0 0 0
+    0 0 0  0 0 0  0 0 0
+    0 0 0  0 0 0  0 0 0
+
+There is no possible value to be filled in `(3,3)`.
+

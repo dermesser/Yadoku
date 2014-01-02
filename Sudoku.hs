@@ -1,5 +1,8 @@
 module Sudoku where
 
+import Control.Monad.List
+import SudokuUtil
+
 import Data.Matrix
 import Data.Word
 import Data.List
@@ -77,25 +80,25 @@ iondsolve :: Sudoku -> IO Int
 iondsolve s = do
                 let sys = ndsolve s
                 case sys of
-                    [] -> putStrLn "No acceptable solution was found; maybe there was no inital integrity?" >> return 0
-                    xs -> mapM_ (putStrLn . toString) xs >> (return $ length xs)
+                    Left e -> putStrLn e >> return 0
+                    Right xs -> mapM_ (putStrLn . toString) xs >> (return $ length xs)
 
-ndsolve :: Sudoku -> [Sudoku]
-ndsolve s = if checkIntegrity s
-            then ndsolve' s (1,1)
-            else []
+ndsolve :: Sudoku -> Either String [Sudoku]
+ndsolve s = case checkIntegrity s of
+                (True,True) -> runListT $ ndsolve' s (1,1)
+                (False,True) -> Left "Some value appears doubly in unit; recheck your input!"
+                (True,False) -> Left "This Sudoku system is unsolvable: The initial configuration forbids a valid solution"
+                (False,False) -> Left $ "Some value appears doubly in unit; recheck your input; also, this Sudoku system is unsolvable: the initial configuration forbids a valid solution."
 
-ndsolve' :: Sudoku -> Position -> [Sudoku]
-ndsolve' s p@(r,c) | r == order && c == order = filter checkIntegrity sudokuPossibilities -- This clause is used when we try to solve the last field (position (order,order))
-                 | c > order = ndsolve' s (r+1,1)
-                 | r > order = ndsolve' s (1,c+1)
-                 | otherwise = listMap (flip ndsolve' (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
-                 where sudokuPossibilities = (map (setField s p) $ possibilities s p)
+ndsolve' :: Sudoku -> Position -> LE String Sudoku
+ndsolve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- This clause is used when we try to solve the last field (position (order,order))
+                                                    [] -> ListT $ Left "No solution could be found"
+                                                    xs -> ListT $ Right xs
+                   | c > order = ndsolve' s (r+1,1)
+                   | r > order = ndsolve' s (1,c+1)
+                   | otherwise = (ListT $ Right sudokuPossibilities) >>= \s -> ndsolve' s (r+1,c) -- Search for a successful version of the system
+                   where sudokuPossibilities = map (setField s p) $ possibilities s p
 
-
-listMap :: (a -> [b]) -> [a] -> [b]
-listMap _ [] = []
-listMap f (x:xs) = concatMap f (x:xs)
 
 -------------------------
 -- No more solver logic
@@ -104,14 +107,17 @@ listMap f (x:xs) = concatMap f (x:xs)
 
 -- Integrity checking --
 
-checkIntegrity :: Sudoku -> Bool
-checkIntegrity s = and [ let e = (s ! p); p = (r,c) in -- if the value is not null and appears in row, column or block more than once, something's wrong.
+-- This function checks if the initial system is valid at all.
+checkIntegrity :: Sudoku -> (Bool,Bool)
+checkIntegrity s = (onlyOnceOccurrence,atLeastOnePossibility)
+    where onlyOnceOccurrence = and [ let e = (s ! p); p = (r,c) in -- if the value is not null and appears in row, column or block more than once, something's wrong.
                             e == 0 ||
                             (occs e (block p)) <= 1 &&
                             (occs e (row p)) <= 1 &&
                             (occs e (col p)) <= 1
                        | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
-    where occs = occurrencesInList
+          atLeastOnePossibility = and [ length (possibilities s (r,c)) > 0 | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
+          occs = occurrencesInList
           block = blockValues s
           row = rowValues s
           col = colValues s
