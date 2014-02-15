@@ -43,11 +43,11 @@ solve s = case checkIntegrity s of
 solve' :: Sudoku -> Position -> Either String Sudoku
 solve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- This clause is used when we try to solve the last field (position (order,order))
                                                     [] -> Left "No solution was found" -- No solution possible.
-                                                    (x:[]) -> Right x
+                                                    (x:_) -> Right x
                  | c > order = solve' s (r+1,1)
                  | r > order = solve' s (1,c+1)
-                 | otherwise = eitherMap (flip solve' (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
-                 where sudokuPossibilities = (map (setField s p) $ possibilities s p)
+                 | otherwise = eitherMap (`solve'` (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
+                 where sudokuPossibilities = map (setField s p) (possibilities s p)
 
 -- Opposite of mapM: Returns the first result carrying a value. Sufficient for Sudoku backtracking
 eitherMap :: (a -> Either String b) -> [a] -> Either String b
@@ -83,7 +83,7 @@ iondsolve s = do
                 let sys = ndsolve s
                 case sys of
                     Left e -> putStrLn "" >> putStrLn e >> putStrLn (toString s) >> return 0
-                    Right xs -> mapM_ (putStrLn . toString) xs >> (return $ length xs)
+                    Right xs -> mapM_ (putStrLn . toString) xs >> return (length xs)
 
 ndsolve :: Sudoku -> Either String [Sudoku]
 ndsolve s = case checkIntegrity s of
@@ -112,11 +112,11 @@ checkIntegrity :: Sudoku -> (ErrorPosition,ErrorPosition)
 checkIntegrity s = (onlyOnceOccurrence,atLeastOnePossibility)
     where onlyOnceOccurrence = findError [ (let e = (s ! p); p = (r,c) in -- if the value is not null and appears in row, column or block more than once, something's wrong.
                             e == 0 ||
-                            (occs e (block p)) <= 1 &&
-                            (occs e (row p)) <= 1 &&
-                            (occs e (col p)) <= 1, (r,c))
+                            occs e (block p) <= 1 &&
+                            occs e (row p) <= 1 &&
+                            occs e (col p) <= 1, (r,c))
                        | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
-          atLeastOnePossibility = findError [ (length (possibilities s (r,c)) > 0,(r,c)) | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
+          atLeastOnePossibility = findError [ (not . null . possibilities s $ (r,c) ,(r,c)) | r <- [1..fromIntegral order], c <- [1..fromIntegral order]]
           occs = occurrencesInList
           block = blockValues s
           row = rowValues s
@@ -137,12 +137,12 @@ setField s p v = setElem v p s
 -- Filling possibilities: Which values are currently allowed?
 possibilities :: Sudoku -> Position -> [Value]
 possibilities s p = case s ! p of
-                        0 -> [1..fromIntegral order] \\ (usedValues s p)
+                        0 -> [1..fromIntegral order] \\ usedValues s p
                         v -> [v] -- field value if already set
 
 -- This function applies the actual Sudoku constraints.
 usedValues :: Sudoku -> Position -> [Value]
-usedValues s p = ((blockValues s p) `union` (rowValues s p) `union` (colValues s p)) `intersect` [1..fromIntegral order] -- intersect to remove all 0s
+usedValues s p = (blockValues s p `union` rowValues s p `union` colValues s p) `intersect` [1..fromIntegral order] -- intersect to remove all 0s
 
 -- Matrix/Index/Position operations
 
@@ -193,9 +193,9 @@ fromString :: String -> Sudoku
 fromString = fromList order order . map (read . cons)
 
 toString :: Sudoku -> String
-toString s = concat $ [ f r c | r <- [1..fromIntegral order], c <- [1..fromIntegral order] ]
+toString s = concat [ f r c | r <- [1..fromIntegral order], c <- [1..fromIntegral order] ]
     where f r c | (r `mod` suborder == 0) && (c == order) = show (s ! (r,c)) ++ "\n\n"
-                | (c == order) = show (s ! (r,c)) ++ "\n"
+                | c == order = show (s ! (r,c)) ++ "\n"
                 | (c `mod` suborder) == 0 = show (s ! (r,c)) ++ "  "
                 | otherwise = show (s ! (r,c)) ++ " "
 
