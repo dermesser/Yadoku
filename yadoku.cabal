@@ -33,3 +33,8 @@ executable sudoku9nd
   -- hs-source-dirs:
   default-language:    Haskell2010
   ghc-options:         -O3
+
+library
+  exposed-modules:     Sudoku, SudokuUtil
+  exposed:             True
+  build-depends:       base >=4, matrix >=0.2, vector >=0.10, mtl >= 2
