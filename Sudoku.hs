@@ -44,7 +44,6 @@ solve' :: Sudoku -> Position -> Either String Sudoku
 solve' s p@(r,c) | r == order && c == order = case sudokuPossibilities of -- This clause is used when we try to solve the last field (position (order,order))
                                                     [] -> Left "No solution was found" -- No solution possible.
                                                     (x:_) -> Right x
-                 | c > order = solve' s (r+1,1)
                  | r > order = solve' s (1,c+1)
                  | otherwise = eitherMap (`solve'` (r+1,c)) sudokuPossibilities -- Search for a successful version of the system
                  where sudokuPossibilities = map (setField s p) (possibilities s p)
@@ -80,8 +79,7 @@ possibility to fill (3,3).
 
 iondsolve :: Sudoku -> IO Int
 iondsolve s = do
-                let sys = ndsolve s
-                case sys of
+                case ndsolve s of
                     Left e -> putStrLn "" >> putStrLn e >> putStrLn (toString s) >> return 0
                     Right xs -> mapM_ (putStrLn . toString) xs >> return (length xs)
 
@@ -128,8 +126,6 @@ strerror e = case e of
                 ((True,_), (False,p)) -> Left $ "This Sudoku system is unsolvable: The initial configuration forbids a valid solution. Error at: " ++ show p
                 ((False,p1), (False,p2)) -> Left $ "Some value appears doubly in unit; recheck your input;" ++
                                             "also, this Sudoku system is unsolvable: the initial configuration forbids a valid solution. Errors at: " ++ show p1 ++ " and " ++ show p2
-
--- Sudoku Utils --
 
 setField :: Sudoku -> Position -> Value -> Sudoku
 setField s p v = setElem v p s
